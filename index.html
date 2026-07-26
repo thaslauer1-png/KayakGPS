@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Kayak GPS Tracker</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body {
+    font-family: Arial;
+    text-align:center;
+    background:#e8f4ff;
+}
+
+h1 {
+    color:#0066cc;
+}
+
+.box {
+    background:white;
+    margin:20px;
+    padding:20px;
+    border-radius:15px;
+    font-size:24px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<h1>Kayak GPS</h1>
+
+
+<div class="box">
+Speed:
+<br>
+<span id="speed">0</span> mph
+</div>
+
+
+<div class="box">
+Distance:
+<br>
+<span id="distance">0</span> ft
+</div>
+
+
+<script>
+
+let lastPosition = null;
+let totalDistance = 0;
+
+
+navigator.geolocation.watchPosition(
+    
+function(position){
+
+    let speed =
+    position.coords.speed;
+
+
+    if(speed){
+        speed =
+        speed * 2.23694;
+    }
+    else{
+        speed = 0;
+    }
+
+
+    document.getElementById("speed")
+    .innerHTML =
+    speed.toFixed(2);
+
+
+
+    if(lastPosition){
+
+        let distance =
+        getDistance(
+            lastPosition.coords.latitude,
+            lastPosition.coords.longitude,
+            position.coords.latitude,
+            position.coords.longitude
+        );
+
+
+        totalDistance += distance;
+
+
+        document.getElementById("distance")
+        .innerHTML =
+        totalDistance.toFixed(1);
+
+    }
+
+
+    lastPosition = position;
+
+
+},
+
+function(error){
+
+alert(error.message);
+
+},
+
+{
+enableHighAccuracy:true
+}
+
+);
+
+
+
+function getDistance(lat1,lon1,lat2,lon2){
+
+let R = 6371000;
+
+let dLat =
+(lat2-lat1)*Math.PI/180;
+
+let dLon =
+(lon2-lon1)*Math.PI/180;
+
+
+let a =
+Math.sin(dLat/2)*
+Math.sin(dLat/2)
++
+Math.cos(lat1*Math.PI/180)*
+Math.cos(lat2*Math.PI/180)*
+Math.sin(dLon/2)*
+Math.sin(dLon/2);
+
+
+let c =
+2*Math.atan2(
+Math.sqrt(a),
+Math.sqrt(1-a)
+);
+
+
+return R*c*3.28084;
+
+}
+
+
+</script>
+
+
+</body>
+</html>
