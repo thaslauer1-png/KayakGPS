@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+-<!DOCTYPE html>
 <html>
 
 <head>
@@ -14,28 +14,40 @@ href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 body {
     font-family: Arial;
-    text-align: center;
-    margin: 0;
+    text-align:center;
+    margin:0;
 }
 
 h1 {
-    margin: 10px;
-}
-
-.box {
-    font-size: 22px;
-    margin: 10px;
-}
-
-#map {
-    height: 65vh;
-    width: 100%;
+    margin:10px;
 }
 
 button {
-    font-size: 18px;
-    padding: 10px 20px;
-    margin: 5px;
+    font-size:18px;
+    padding:10px 15px;
+    margin:5px;
+}
+
+.box {
+    font-size:20px;
+    margin:8px;
+}
+
+#map {
+    height:55vh;
+    width:100%;
+}
+
+#history {
+    text-align:left;
+    padding:10px;
+}
+
+.trip {
+    border:1px solid #aaa;
+    margin:5px;
+    padding:8px;
+    border-radius:8px;
 }
 
 </style>
@@ -49,13 +61,13 @@ button {
 <h1>Kayak GPS</h1>
 
 
-<button onclick="startTracking()">
-Start Tracking
+<button onclick="startTrip()">
+Start Trip
 </button>
 
 
-<button onclick="stopTracking()">
-Stop Tracking
+<button onclick="stopTrip()">
+Stop Trip
 </button>
 
 
@@ -72,7 +84,30 @@ Distance:
 </div>
 
 
+<div class="box">
+Time:
+<span id="time">0</span> sec
+</div>
+
+
+<div class="box">
+Average:
+<span id="average">0</span> mph
+</div>
+
+
+<div class="box">
+Max:
+<span id="max">0</span> mph
+</div>
+
+
 <div id="map"></div>
+
+
+<h2>Saved Trips</h2>
+
+<div id="history"></div>
 
 
 
@@ -82,67 +117,156 @@ Distance:
 <script>
 
 
-// MAP SETUP
-
-let map = L.map('map');
+let map =
+L.map('map');
 
 
 L.tileLayer(
-'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-{
-    maxZoom:19
-}
-).addTo(map);
+'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+)
+.addTo(map);
 
 
 
-let marker = null;
-
-
-let points = [];
+let marker;
 
 
 let track =
 L.polyline(
 [],
 {
-    color:'blue',
-    weight:5
+color:'blue',
+weight:5
 }
-).addTo(map);
+)
+.addTo(map);
 
 
 
-let tracking = false;
+let points=[];
+
+let tracking=false;
+
+let lastPoint=null;
+
+let distance=0;
+
+let startTime=null;
+
+let timer=null;
+
+let speedTotal=0;
+
+let speedCount=0;
+
+let maxSpeed=0;
 
 
-let lastPoint = null;
+
+function startTrip(){
 
 
-let totalDistance = 0;
+points=[];
+
+distance=0;
+
+speedTotal=0;
+
+speedCount=0;
+
+maxSpeed=0;
+
+lastPoint=null;
 
 
-let lastGPS = null;
+track.setLatLngs([]);
+
+
+tracking=true;
+
+
+startTime=new Date();
+
+
+timer=setInterval(function(){
+
+let seconds =
+Math.floor(
+(new Date()-startTime)/1000
+);
+
+document.getElementById("time")
+.innerHTML=seconds;
+
+
+},1000);
 
 
 
-function startTracking(){
+alert("Trip Started");
 
-tracking = true;
-
-alert("Tracking Started");
 
 }
 
 
 
-function stopTracking(){
 
-tracking = false;
 
-alert("Tracking Stopped");
+function stopTrip(){
+
+
+tracking=false;
+
+
+clearInterval(timer);
+
+
+
+let trip={
+
+
+date:new Date().toLocaleString(),
+
+
+distance:distance,
+
+
+time:
+Math.floor(
+(new Date()-startTime)/1000
+),
+
+
+average:
+speedCount?
+speedTotal/speedCount:
+0,
+
+
+max:maxSpeed,
+
+
+points:points
+
+
+};
+
+
+
+saveTrip(trip);
+
+
+
+alert("Trip Saved");
+
+
+
+showTrips();
+
 
 }
+
+
 
 
 
@@ -168,9 +292,8 @@ let current =
 
 
 
-// FIRST GPS POINT
-
 if(!marker){
+
 
 marker =
 L.marker(current)
@@ -179,10 +302,8 @@ L.marker(current)
 
 map.setView(current,18);
 
+
 }
-
-
-
 
 else{
 
@@ -194,7 +315,6 @@ marker.setLatLng(current);
 
 
 
-// ONLY DRAW WHEN TRACKING
 
 if(tracking){
 
@@ -204,7 +324,7 @@ if(lastPoint){
 
 
 
-let distance =
+let d =
 getDistance(
 
 lastPoint[0],
@@ -216,53 +336,60 @@ lon
 
 
 
-// ignore GPS noise
-
-if(distance > 5){
+if(d>5){
 
 
 
-totalDistance += distance;
-
+distance += d;
 
 
 document.getElementById("distance")
 .innerHTML =
-totalDistance.toFixed(1);
+distance.toFixed(1);
 
 
 
-points.push(current);
+points.push(
+{
+lat:lat,
+lon:lon,
+time:new Date()
+}
+);
 
 
-track.setLatLngs(points);
+
+track.setLatLngs(
+points.map(p=>[p.lat,p.lon])
+);
 
 
 
 lastPoint=current;
 
 
-
 }
 
 
 
 }
-
-
 
 else{
 
 
-points.push(current);
-
-
-track.setLatLngs(points);
-
-
 lastPoint=current;
 
 
+points.push(
+{
+lat:lat,
+lon:lon,
+time:new Date()
+}
+);
+
+
+
 }
 
 
@@ -271,23 +398,20 @@ lastPoint=current;
 
 
 
-
-// SPEED
 
 let speed =
 position.coords.speed;
 
 
-if(speed && speed > 0){
+if(speed && speed>0){
 
-speed =
-speed * 2.23694;
+speed *= 2.23694;
 
 }
 
 else{
 
-speed = 0;
+speed=0;
 
 }
 
@@ -299,7 +423,37 @@ speed.toFixed(2);
 
 
 
-lastGPS = position;
+if(tracking){
+
+
+speedTotal += speed;
+
+speedCount++;
+
+
+let avg =
+speedTotal/speedCount;
+
+
+document.getElementById("average")
+.innerHTML =
+avg.toFixed(2);
+
+
+
+if(speed>maxSpeed){
+
+maxSpeed=speed;
+
+
+document.getElementById("max")
+.innerHTML =
+maxSpeed.toFixed(2);
+
+}
+
+
+}
 
 
 
@@ -309,14 +463,9 @@ lastGPS = position;
 
 function(error){
 
-alert(
-"GPS Error: "
-+
-error.message
-);
+alert(error.message);
 
 },
-
 
 
 {
@@ -336,7 +485,8 @@ timeout:10000
 
 
 
-// DISTANCE CALCULATION
+
+
 
 function getDistance(
 lat1,
@@ -346,7 +496,7 @@ lon2
 ){
 
 
-let R = 6371000;
+let R=6371000;
 
 
 let dLat =
@@ -361,24 +511,20 @@ let dLon =
 Math.PI/180;
 
 
+
 let a =
-Math.sin(dLat/2)
-*
-Math.sin(dLat/2)
+Math.sin(dLat/2)**2
 +
 Math.cos(lat1*Math.PI/180)
 *
 Math.cos(lat2*Math.PI/180)
 *
-Math.sin(dLon/2)
-*
-Math.sin(dLon/2);
+Math.sin(dLon/2)**2;
 
 
 
 let c =
-2 *
-Math.atan2(
+2*Math.atan2(
 Math.sqrt(a),
 Math.sqrt(1-a)
 );
@@ -389,6 +535,98 @@ return R*c*3.28084;
 
 
 }
+
+
+
+
+
+function saveTrip(trip){
+
+
+let trips =
+JSON.parse(
+localStorage.getItem("kayakTrips")
+||
+"[]"
+);
+
+
+
+trips.push(trip);
+
+
+
+localStorage.setItem(
+"kayakTrips",
+JSON.stringify(trips)
+);
+
+
+
+}
+
+
+
+
+function showTrips(){
+
+
+let trips =
+JSON.parse(
+localStorage.getItem("kayakTrips")
+||
+"[]"
+);
+
+
+
+let html="";
+
+
+
+trips.forEach(function(t,i){
+
+
+
+html +=
+`
+<div class="trip">
+
+Trip ${i+1}<br>
+
+${t.date}<br>
+
+Distance:
+${t.distance.toFixed(1)} ft<br>
+
+Time:
+${t.time} sec<br>
+
+Average:
+${t.average.toFixed(2)} mph<br>
+
+Max:
+${t.max.toFixed(2)} mph
+
+</div>
+`;
+
+
+
+});
+
+
+
+document.getElementById("history")
+.innerHTML=html;
+
+
+
+}
+
+
+
+showTrips();
 
 
 
