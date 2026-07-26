@@ -7,6 +7,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<link rel="manifest" href="manifest.json">
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
 <style>
@@ -94,12 +96,12 @@ GPS Points:
 
 
 <button onclick="downloadLastGPX()">
-Download GPX
+Download Last GPX
 </button>
 
 
 <button onclick="downloadLastKML()">
-Download KML
+Download Last KML
 </button>
 
 
@@ -193,6 +195,7 @@ document.getElementById("status").innerHTML =
 "Tracking";
 
 }
+
 
 
 
@@ -502,22 +505,29 @@ html += `
 
 ${t.date}<br>
 
+Distance:
 ${(t.distance/5280).toFixed(3)} miles
 
 <br>
 
+GPS Points:
+${t.points.length}
+
+<br><br>
+
 
 <button onclick="downloadTrip(${i},'gpx')">
-
 GPX
-
 </button>
 
 
 <button onclick="downloadTrip(${i},'kml')">
-
 KML
+</button>
 
+
+<button onclick="deleteTrip(${i})">
+Delete
 </button>
 
 
@@ -536,6 +546,47 @@ html;
 
 }
 
+
+
+
+
+function deleteTrip(index){
+
+
+let trips =
+JSON.parse(
+localStorage.getItem("kayakTrips") || "[]"
+);
+
+
+
+if(confirm("Delete this trip?")){
+
+
+trips.splice(index,1);
+
+
+
+localStorage.setItem(
+
+"kayakTrips",
+
+JSON.stringify(trips)
+
+);
+
+
+
+showTrips();
+
+
+document.getElementById("status").innerHTML =
+"Trip Deleted";
+
+
+}
+
+}
 function downloadLastGPX(){
 
 if(lastTrip){
@@ -551,6 +602,7 @@ alert("No trip available");
 }
 
 }
+
 
 
 
@@ -693,6 +745,7 @@ gpx +=
 });
 
 
+
 gpx +=
 
 `
@@ -724,6 +777,8 @@ trip.name+".gpx",
 
 
 
+
+
 function makeKML(trip){
 
 
@@ -739,6 +794,7 @@ let kml =
 <name>${trip.name}</name>
 
 
+
 <Style id="kayakTrack">
 
 <LineStyle>
@@ -752,6 +808,7 @@ let kml =
 </Style>
 
 
+
 <Placemark>
 
 
@@ -759,6 +816,7 @@ let kml =
 
 
 <styleUrl>#kayakTrack</styleUrl>
+
 
 
 <LineString>
@@ -825,6 +883,18 @@ trip.name+".kml",
 
 
 
+
+// Enable offline mode
+
+if ("serviceWorker" in navigator){
+
+navigator.serviceWorker.register("service-worker.js");
+
+}
+
+
+
+// Load saved trips
 
 showTrips();
 
