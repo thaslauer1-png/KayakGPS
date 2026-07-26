@@ -12,36 +12,37 @@
 <style>
 
 body {
-    font-family: Arial;
-    text-align: center;
-    margin: 0;
+font-family: Arial;
+text-align:center;
+margin:0;
 }
 
 button {
-    font-size: 18px;
-    padding: 10px;
-    margin: 5px;
+font-size:18px;
+padding:10px;
+margin:5px;
 }
 
 input {
-    font-size: 18px;
-    padding: 8px;
+font-size:18px;
+padding:8px;
+width:80%;
 }
 
 .box {
-    font-size: 20px;
-    margin: 8px;
+font-size:20px;
+margin:8px;
 }
 
 #map {
-    height: 55vh;
-    width: 100%;
+height:60vh;
+width:100%;
 }
 
 .trip {
-    border: 1px solid #999;
-    margin: 8px;
-    padding: 8px;
+border:1px solid #888;
+margin:8px;
+padding:8px;
 }
 
 </style>
@@ -87,30 +88,18 @@ Time:
 
 
 <div class="box">
-Average:
-<span id="average">0</span> mph
-</div>
-
-
-<div class="box">
-Maximum:
-<span id="max">0</span> mph
-</div>
-
-
-<div class="box">
 GPS Points:
 <span id="points">0</span>
 </div>
 
 
-<button onclick="downloadLastTrip()">
-Download Last GPX
+<button onclick="downloadLastGPX()">
+Download GPX
 </button>
 
 
-<button onclick="clearTrips()">
-Clear Trips
+<button onclick="downloadLastKML()">
+Download KML
 </button>
 
 
@@ -133,7 +122,8 @@ Clear Trips
 <script>
 
 
-let map = L.map('map');
+let map =
+L.map('map');
 
 
 L.tileLayer(
@@ -145,10 +135,10 @@ maxZoom:19
 
 
 
-let marker = null;
+let marker;
 
 
-let track =
+let line =
 L.polyline(
 [],
 {
@@ -159,67 +149,48 @@ weight:5
 
 
 
-let points = [];
+let tracking=false;
 
-let tracking = false;
+let points=[];
 
-let lastPoint = null;
+let lastPoint=null;
 
-let distance = 0;
+let distance=0;
 
-let startTime = null;
+let startTime;
 
-let timer = null;
+let timer;
 
-let speedTotal = 0;
-
-let speedCount = 0;
-
-let maxSpeed = 0;
-
-let lastTrip = null;
+let lastTrip=null;
 
 
 
 function startTrip(){
 
-points = [];
+points=[];
 
-distance = 0;
+distance=0;
 
-speedTotal = 0;
+lastPoint=null;
 
-speedCount = 0;
-
-maxSpeed = 0;
-
-lastPoint = null;
+line.setLatLngs([]);
 
 
-track.setLatLngs([]);
+tracking=true;
 
 
-tracking = true;
+startTime=new Date();
 
 
-startTime = new Date();
+timer=setInterval(function(){
 
-
-timer = setInterval(function(){
-
-let seconds =
+document.getElementById("time").innerHTML =
 Math.floor((new Date()-startTime)/1000);
-
-
-document.getElementById("time").innerHTML = seconds;
-
 
 },1000);
 
 
-document.getElementById("status").innerHTML =
-"Tracking";
-
+document.getElementById("status").innerHTML="Tracking";
 
 }
 
@@ -227,14 +198,12 @@ document.getElementById("status").innerHTML =
 
 function stopTrip(){
 
-
-tracking = false;
-
+tracking=false;
 
 clearInterval(timer);
 
 
-let trip = {
+let trip={
 
 name:
 document.getElementById("tripName").value || "Unnamed Trip",
@@ -242,15 +211,7 @@ document.getElementById("tripName").value || "Unnamed Trip",
 date:
 new Date().toLocaleString(),
 
-distance: distance,
-
-time:
-Math.floor((new Date()-startTime)/1000),
-
-average:
-speedCount ? speedTotal/speedCount : 0,
-
-max:maxSpeed,
+distance:distance,
 
 points:points
 
@@ -260,17 +221,16 @@ points:points
 saveTrip(trip);
 
 
-lastTrip = trip;
+lastTrip=trip;
 
 
 showTrips();
 
 
-document.getElementById("status").innerHTML =
-"Trip Saved";
-
+document.getElementById("status").innerHTML="Saved";
 
 }
+
 navigator.geolocation.watchPosition(
 
 function(position){
@@ -308,10 +268,12 @@ if(lastPoint){
 
 
 let d = getDistance(
+
 lastPoint[0],
 lastPoint[1],
 lat,
 lon
+
 );
 
 
@@ -322,6 +284,31 @@ if(d > 5){
 distance += d;
 
 
+points.push({
+
+lat:lat,
+
+lon:lon,
+
+time:new Date().toISOString()
+
+});
+
+
+lastPoint=current;
+
+
+line.setLatLngs(
+
+points.map(function(p){
+
+return [p.lat,p.lon];
+
+})
+
+);
+
+
 document.getElementById("distance").innerHTML =
 distance.toFixed(1);
 
@@ -330,35 +317,8 @@ document.getElementById("miles").innerHTML =
 (distance/5280).toFixed(3);
 
 
-
-points.push({
-
-lat:lat,
-
-lon:lon,
-
-time:new Date().toISOString()
-
-});
-
-
-
 document.getElementById("points").innerHTML =
 points.length;
-
-
-
-track.setLatLngs(
-points.map(function(p){
-
-return [p.lat,p.lon];
-
-})
-);
-
-
-
-lastPoint = current;
 
 
 }
@@ -370,7 +330,7 @@ lastPoint = current;
 else{
 
 
-lastPoint = current;
+lastPoint=current;
 
 
 points.push({
@@ -392,22 +352,21 @@ points.length;
 
 
 }
-
 
 
 
 let speed = position.coords.speed;
 
 
-if(speed && speed > 0){
+if(speed){
 
-speed = speed * 2.23694;
+speed=speed*2.23694;
 
 }
 
 else{
 
-speed = 0;
+speed=0;
 
 }
 
@@ -418,41 +377,13 @@ speed.toFixed(2);
 
 
 
-if(tracking){
-
-
-speedTotal += speed;
-
-speedCount++;
-
-
-document.getElementById("average").innerHTML =
-(speedTotal/speedCount).toFixed(2);
-
-
-
-if(speed > maxSpeed){
-
-maxSpeed = speed;
-
-
-document.getElementById("max").innerHTML =
-maxSpeed.toFixed(2);
-
-}
-
-
-}
-
-
-
 },
 
 
 function(error){
 
 document.getElementById("status").innerHTML =
-"GPS Error: " + error.message;
+"GPS Error: "+error.message;
 
 },
 
@@ -473,15 +404,10 @@ timeout:10000
 
 
 
-function getDistance(
-lat1,
-lon1,
-lat2,
-lon2
-){
+function getDistance(lat1,lon1,lat2,lon2){
 
 
-let R = 6371000;
+let R=6371000;
 
 
 let dLat =
@@ -494,9 +420,12 @@ let dLon =
 
 let a =
 Math.sin(dLat/2)**2 +
+
 Math.cos(lat1*Math.PI/180) *
 Math.cos(lat2*Math.PI/180) *
+
 Math.sin(dLon/2)**2;
+
 
 
 let c =
@@ -506,11 +435,10 @@ Math.sqrt(1-a)
 );
 
 
+
 return R*c*3.28084;
 
-
 }
-
 
 
 
@@ -524,12 +452,17 @@ localStorage.getItem("kayakTrips") || "[]"
 );
 
 
+
 trips.push(trip);
 
 
+
 localStorage.setItem(
+
 "kayakTrips",
+
 JSON.stringify(trips)
+
 );
 
 
@@ -548,7 +481,9 @@ localStorage.getItem("kayakTrips") || "[]"
 );
 
 
-let html = "";
+
+let html="";
+
 
 
 trips.forEach(function(t,i){
@@ -562,34 +497,42 @@ html += `
 
 ${t.date}<br>
 
-Distance:
-${(t.distance/5280).toFixed(3)} miles<br>
+${(t.distance/5280).toFixed(3)} miles
 
-Points:
-${t.points.length}<br>
+<br>
 
-<button onclick="downloadTrip(${i})">
-Download GPX
+<button onclick="downloadTrip(${i},'gpx')">
+
+GPX
+
 </button>
+
+
+<button onclick="downloadTrip(${i},'kml')">
+
+KML
+
+</button>
+
 
 </div>
 
 `;
 
+
+
 });
 
 
-document.getElementById("history").innerHTML = html;
+document.getElementById("history").innerHTML =
+html;
 
 
 }
 
 
 
-
-
-function downloadLastTrip(){
-
+function downloadLastGPX(){
 
 if(lastTrip){
 
@@ -599,18 +542,35 @@ makeGPX(lastTrip);
 
 else{
 
-alert("No current trip available");
+alert("No trip available");
+
+}
 
 }
 
 
+
+function downloadLastKML(){
+
+if(lastTrip){
+
+makeKML(lastTrip);
+
+}
+
+else{
+
+alert("No trip available");
+
+}
+
 }
 
 
 
 
 
-function downloadTrip(index){
+function downloadTrip(index,type){
 
 
 let trips =
@@ -619,7 +579,18 @@ localStorage.getItem("kayakTrips") || "[]"
 );
 
 
+
+if(type=="kml"){
+
+makeKML(trips[index]);
+
+}
+
+else{
+
 makeGPX(trips[index]);
+
+}
 
 
 }
@@ -628,58 +599,14 @@ makeGPX(trips[index]);
 
 
 
-function makeGPX(trip){
-
-
-let gpx =
-`<?xml version="1.0" encoding="UTF-8"?>
-
-<gpx version="1.1"
-creator="Kayak GPS"
-xmlns="http://www.topografix.com/GPX/1/1">
-
-<trk>
-
-<name>${trip.name}</name>
-
-<trkseg>
-`;
-
-
-
-trip.points.forEach(function(p){
-
-
-gpx += `
-
-<trkpt lat="${p.lat}" lon="${p.lon}">
-
-<time>${p.time}</time>
-
-</trkpt>
-
-`;
-
-});
-
-
-
-gpx += `
-
-</trkseg>
-
-</trk>
-
-</gpx>
-`;
-
+function saveFile(content,name,type){
 
 
 let blob =
 new Blob(
-[gpx],
+[content],
 {
-type:"application/gpx+xml"
+type:type
 }
 );
 
@@ -694,11 +621,10 @@ let a =
 document.createElement("a");
 
 
-a.href = url;
+a.href=url;
 
 
-a.download =
-trip.name + ".gpx";
+a.download=name;
 
 
 document.body.appendChild(a);
@@ -718,9 +644,76 @@ URL.revokeObjectURL(url);
 },1000);
 
 
+}
 
-document.getElementById("status").innerHTML =
-"GPX Created";
+
+
+
+
+function makeGPX(trip){
+
+
+let gpx =
+
+`<?xml version="1.0" encoding="UTF-8"?>
+
+<gpx version="1.1"
+creator="Kayak GPS">
+
+<trk>
+
+<name>${trip.name}</name>
+
+<trkseg>
+`;
+
+
+
+trip.points.forEach(function(p){
+
+
+gpx +=
+
+`
+
+<trkpt lat="${p.lat}" lon="${p.lon}">
+
+<time>${p.time}</time>
+
+</trkpt>
+
+`;
+
+
+
+});
+
+
+
+gpx +=
+
+`
+
+</trkseg>
+
+</trk>
+
+</gpx>
+
+`;
+
+
+
+saveFile(
+
+gpx,
+
+trip.name+".gpx",
+
+"application/gpx+xml"
+
+);
+
 
 
 }
@@ -729,21 +722,80 @@ document.getElementById("status").innerHTML =
 
 
 
-function clearTrips(){
+function makeKML(trip){
 
 
-localStorage.removeItem("kayakTrips");
+let kml =
+
+`<?xml version="1.0" encoding="UTF-8"?>
+
+<kml xmlns="http://www.opengis.net/kml/2.2">
+
+<Document>
+
+<name>${trip.name}</name>
+
+<Placemark>
+
+<LineString>
+
+<tessellate>1</tessellate>
+
+<coordinates>
+
+`;
 
 
-showTrips();
+
+trip.points.forEach(function(p){
+
+
+kml +=
+
+`${p.lon},${p.lat},0 `;
+
+
+});
+
+
+
+kml +=
+
+`
+
+</coordinates>
+
+</LineString>
+
+</Placemark>
+
+</Document>
+
+</kml>
+
+`;
+
+
+
+saveFile(
+
+kml,
+
+trip.name+".kml",
+
+"application/vnd.google-earth.kml+xml"
+
+);
+
 
 
 }
 
 
 
-showTrips();
 
+
+showTrips();
 
 
 </script>
