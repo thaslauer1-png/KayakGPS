@@ -11,7 +11,6 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
-
 <style>
 
 body {
@@ -203,7 +202,6 @@ document.getElementById("status").innerHTML =
 "Tracking";
 
 }
-
 
 
 
@@ -469,6 +467,8 @@ return R*c*3.28084;
 
 
 
+
+
 function saveTrip(trip){
 
 
@@ -500,6 +500,7 @@ JSON.stringify(trips)
 
 
 
+
 function showTrips(){
 
 
@@ -515,6 +516,11 @@ let html = "";
 
 
 trips.forEach(function(t,i){
+
+
+let paddle =
+estimatePaddle(t);
+
 
 
 html += `
@@ -537,6 +543,16 @@ ${formatTime(t.duration)}
 
 Average Speed:
 ${averageSpeed(t.distance,t.duration)} mph
+
+<br>
+
+Estimated Paddle Speed:
+${paddle.speed} mph
+
+<br>
+
+Estimated Paddling Time:
+${formatTime(paddle.time)}
 
 <br>
 
@@ -575,6 +591,7 @@ html;
 
 
 }
+
 
 
 
@@ -622,8 +639,82 @@ document.getElementById("status").innerHTML =
 
 
 
-function formatTime(seconds){
+function estimatePaddle(trip){
 
+let movingTime = 0;
+
+
+for(let i=1;i<trip.points.length;i++){
+
+
+let a = trip.points[i-1];
+
+let b = trip.points[i];
+
+
+let t1 =
+new Date(a.time);
+
+
+let t2 =
+new Date(b.time);
+
+
+let seconds =
+(t2-t1)/1000;
+
+
+let d =
+getDistance(
+a.lat,
+a.lon,
+b.lat,
+b.lon
+);
+
+
+let mph =
+(d/5280)/(seconds/3600);
+
+
+
+if(mph > 0.2 && mph < 10){
+
+movingTime += seconds;
+
+}
+
+}
+
+
+let speed = 0;
+
+
+if(movingTime > 0){
+
+speed =
+((trip.distance/5280)/(movingTime/3600))
+.toFixed(2);
+
+}
+
+
+return {
+
+time:Math.floor(movingTime),
+
+speed:speed
+
+};
+
+
+}
+
+
+
+
+
+function formatTime(seconds){
 
 if(!seconds){
 
@@ -641,7 +732,7 @@ Math.floor((seconds%3600)/60);
 
 
 let secs =
-seconds % 60;
+Math.floor(seconds%60);
 
 
 
@@ -665,7 +756,6 @@ String(secs).padStart(2,"0");
 
 
 
-
 function averageSpeed(distanceFeet,seconds){
 
 
@@ -676,15 +766,8 @@ return "0.00";
 }
 
 
-let miles =
-distanceFeet / 5280;
-
-
-let hours =
-seconds / 3600;
-
-
-return (miles / hours).toFixed(2);
+return ((distanceFeet/5280)/(seconds/3600))
+.toFixed(2);
 
 }
 function downloadLastGPX(){
@@ -721,7 +804,6 @@ alert("No trip available");
 }
 
 }
-
 
 
 
@@ -805,7 +887,6 @@ URL.revokeObjectURL(url);
 
 
 }
-
 
 
 
@@ -1006,7 +1087,7 @@ navigator.serviceWorker.register("service-worker.js");
 
 
 
-// Load saved trips when opening app
+// Load saved trips
 
 showTrips();
 
