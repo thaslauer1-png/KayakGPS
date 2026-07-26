@@ -11,6 +11,7 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
+
 <style>
 
 body {
@@ -177,6 +178,13 @@ lastPoint = null;
 line.setLatLngs([]);
 
 
+document.getElementById("distance").innerHTML = 0;
+
+document.getElementById("miles").innerHTML = 0;
+
+document.getElementById("points").innerHTML = 0;
+
+
 tracking = true;
 
 
@@ -199,11 +207,17 @@ document.getElementById("status").innerHTML =
 
 
 
+
 function stopTrip(){
 
 tracking = false;
 
 clearInterval(timer);
+
+
+let duration =
+Math.floor((new Date()-startTime)/1000);
+
 
 
 let trip = {
@@ -215,6 +229,8 @@ date:
 new Date().toLocaleString(),
 
 distance:distance,
+
+duration:duration,
 
 points:points
 
@@ -410,6 +426,8 @@ timeout:10000
 
 
 
+
+
 function getDistance(lat1,lon1,lat2,lon2){
 
 
@@ -480,6 +498,8 @@ JSON.stringify(trips)
 
 
 
+
+
 function showTrips(){
 
 
@@ -507,6 +527,16 @@ ${t.date}<br>
 
 Distance:
 ${(t.distance/5280).toFixed(3)} miles
+
+<br>
+
+Duration:
+${formatTime(t.duration)}
+
+<br>
+
+Average Speed:
+${averageSpeed(t.distance,t.duration)} mph
 
 <br>
 
@@ -587,6 +617,76 @@ document.getElementById("status").innerHTML =
 }
 
 }
+
+
+
+
+
+function formatTime(seconds){
+
+
+if(!seconds){
+
+return "0:00";
+
+}
+
+
+let hrs =
+Math.floor(seconds/3600);
+
+
+let mins =
+Math.floor((seconds%3600)/60);
+
+
+let secs =
+seconds % 60;
+
+
+
+if(hrs > 0){
+
+return hrs + ":" +
+String(mins).padStart(2,"0") + ":" +
+String(secs).padStart(2,"0");
+
+}
+
+else{
+
+return mins + ":" +
+String(secs).padStart(2,"0");
+
+}
+
+}
+
+
+
+
+
+function averageSpeed(distanceFeet,seconds){
+
+
+if(!seconds || seconds <= 0){
+
+return "0.00";
+
+}
+
+
+let miles =
+distanceFeet / 5280;
+
+
+let hours =
+seconds / 3600;
+
+
+return (miles / hours).toFixed(2);
+
+}
 function downloadLastGPX(){
 
 if(lastTrip){
@@ -626,6 +726,8 @@ alert("No trip available");
 
 
 
+
+
 function downloadTrip(index,type){
 
 
@@ -650,6 +752,8 @@ makeGPX(trips[index]);
 
 
 }
+
+
 
 
 
@@ -701,6 +805,9 @@ URL.revokeObjectURL(url);
 
 
 }
+
+
+
 
 
 
@@ -772,6 +879,7 @@ trip.name+".gpx",
 
 
 }
+
 
 
 
@@ -884,7 +992,9 @@ trip.name+".kml",
 
 
 
-// Enable offline mode
+
+
+// Register offline app service worker
 
 if ("serviceWorker" in navigator){
 
@@ -894,9 +1004,12 @@ navigator.serviceWorker.register("service-worker.js");
 
 
 
-// Load saved trips
+
+
+// Load saved trips when opening app
 
 showTrips();
+
 
 
 </script>
