@@ -1,4 +1,4 @@
--<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -7,8 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" 
-href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 
@@ -24,8 +23,14 @@ h1 {
 
 button {
     font-size:18px;
-    padding:10px 15px;
+    padding:10px;
     margin:5px;
+}
+
+input {
+    font-size:18px;
+    padding:8px;
+    width:80%;
 }
 
 .box {
@@ -38,14 +43,9 @@ button {
     width:100%;
 }
 
-#history {
-    text-align:left;
-    padding:10px;
-}
-
 .trip {
-    border:1px solid #aaa;
-    margin:5px;
+    border:1px solid #999;
+    margin:8px;
     padding:8px;
     border-radius:8px;
 }
@@ -61,6 +61,12 @@ button {
 <h1>Kayak GPS</h1>
 
 
+<input id="tripName" placeholder="Trip name">
+
+
+<br>
+
+
 <button onclick="startTrip()">
 Start Trip
 </button>
@@ -69,7 +75,6 @@ Start Trip
 <button onclick="stopTrip()">
 Stop Trip
 </button>
-
 
 
 <div class="box">
@@ -81,6 +86,8 @@ Speed:
 <div class="box">
 Distance:
 <span id="distance">0</span> ft
+<br>
+<span id="miles">0</span> miles
 </div>
 
 
@@ -100,6 +107,16 @@ Average:
 Max:
 <span id="max">0</span> mph
 </div>
+
+
+<button onclick="downloadLastTrip()">
+Download Last Trip GPX
+</button>
+
+
+<button onclick="clearTrips()">
+Clear Saved Trips
+</button>
 
 
 <div id="map"></div>
@@ -122,9 +139,11 @@ L.map('map');
 
 
 L.tileLayer(
-'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-)
-.addTo(map);
+'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+maxZoom:19
+}
+).addTo(map);
 
 
 
@@ -135,11 +154,10 @@ let track =
 L.polyline(
 [],
 {
-color:'blue',
+color:"blue",
 weight:5
 }
-)
-.addTo(map);
+).addTo(map);
 
 
 
@@ -151,15 +169,19 @@ let lastPoint=null;
 
 let distance=0;
 
-let startTime=null;
+let startTime;
 
-let timer=null;
+let timer;
+
 
 let speedTotal=0;
 
 let speedCount=0;
 
 let maxSpeed=0;
+
+
+let lastTrip=null;
 
 
 
@@ -190,10 +212,12 @@ startTime=new Date();
 
 timer=setInterval(function(){
 
+
 let seconds =
 Math.floor(
 (new Date()-startTime)/1000
 );
+
 
 document.getElementById("time")
 .innerHTML=seconds;
@@ -202,12 +226,10 @@ document.getElementById("time")
 },1000);
 
 
-
-alert("Trip Started");
+alert("Trip started");
 
 
 }
-
 
 
 
@@ -225,7 +247,14 @@ clearInterval(timer);
 let trip={
 
 
-date:new Date().toLocaleString(),
+name:
+document.getElementById("tripName").value
+||
+"Unnamed Trip",
+
+
+date:
+new Date().toLocaleString(),
 
 
 distance:distance,
@@ -256,16 +285,16 @@ points:points
 saveTrip(trip);
 
 
-
-alert("Trip Saved");
-
+lastTrip=trip;
 
 
 showTrips();
 
 
-}
+alert("Trip saved");
 
+
+}
 
 
 
@@ -315,7 +344,6 @@ marker.setLatLng(current);
 
 
 
-
 if(tracking){
 
 
@@ -339,7 +367,6 @@ lon
 if(d>5){
 
 
-
 distance += d;
 
 
@@ -349,18 +376,28 @@ distance.toFixed(1);
 
 
 
-points.push(
-{
+document.getElementById("miles")
+.innerHTML =
+(distance/5280).toFixed(3);
+
+
+
+points.push({
+
 lat:lat,
+
 lon:lon,
-time:new Date()
-}
-);
+
+time:new Date().toISOString()
+
+});
 
 
 
 track.setLatLngs(
-points.map(p=>[p.lat,p.lon])
+points.map(
+p=>[p.lat,p.lon]
+)
 );
 
 
@@ -371,8 +408,8 @@ lastPoint=current;
 }
 
 
-
 }
+
 
 else{
 
@@ -380,14 +417,15 @@ else{
 lastPoint=current;
 
 
-points.push(
-{
-lat:lat,
-lon:lon,
-time:new Date()
-}
-);
+points.push({
 
+lat:lat,
+
+lon:lon,
+
+time:new Date().toISOString()
+
+});
 
 
 }
@@ -405,7 +443,7 @@ position.coords.speed;
 
 if(speed && speed>0){
 
-speed *= 2.23694;
+speed*=2.23694;
 
 }
 
@@ -426,18 +464,15 @@ speed.toFixed(2);
 if(tracking){
 
 
-speedTotal += speed;
+speedTotal+=speed;
 
 speedCount++;
 
 
-let avg =
-speedTotal/speedCount;
-
-
 document.getElementById("average")
 .innerHTML =
-avg.toFixed(2);
+(speedTotal/speedCount)
+.toFixed(2);
 
 
 
@@ -463,7 +498,11 @@ maxSpeed.toFixed(2);
 
 function(error){
 
-alert(error.message);
+alert(
+"GPS Error: "
++
+error.message
+);
 
 },
 
@@ -478,10 +517,7 @@ timeout:10000
 
 }
 
-
-
 );
-
 
 
 
@@ -499,40 +535,29 @@ lon2
 let R=6371000;
 
 
-let dLat =
-(lat2-lat1)
-*
-Math.PI/180;
+let dLat=
+(lat2-lat1)*Math.PI/180;
 
 
-let dLon =
-(lon2-lon1)
-*
-Math.PI/180;
+let dLon=
+(lon2-lon1)*Math.PI/180;
 
 
-
-let a =
-Math.sin(dLat/2)**2
-+
-Math.cos(lat1*Math.PI/180)
-*
-Math.cos(lat2*Math.PI/180)
-*
+let a=
+Math.sin(dLat/2)**2+
+Math.cos(lat1*Math.PI/180)*
+Math.cos(lat2*Math.PI/180)*
 Math.sin(dLon/2)**2;
 
 
-
-let c =
+let c=
 2*Math.atan2(
 Math.sqrt(a),
 Math.sqrt(1-a)
 );
 
 
-
 return R*c*3.28084;
-
 
 }
 
@@ -543,7 +568,7 @@ return R*c*3.28084;
 function saveTrip(trip){
 
 
-let trips =
+let trips=
 JSON.parse(
 localStorage.getItem("kayakTrips")
 ||
@@ -551,9 +576,7 @@ localStorage.getItem("kayakTrips")
 );
 
 
-
 trips.push(trip);
-
 
 
 localStorage.setItem(
@@ -562,8 +585,8 @@ JSON.stringify(trips)
 );
 
 
-
 }
+
 
 
 
@@ -571,13 +594,12 @@ JSON.stringify(trips)
 function showTrips(){
 
 
-let trips =
+let trips=
 JSON.parse(
 localStorage.getItem("kayakTrips")
 ||
 "[]"
 );
-
 
 
 let html="";
@@ -587,17 +609,16 @@ let html="";
 trips.forEach(function(t,i){
 
 
+html+=`
 
-html +=
-`
 <div class="trip">
 
-Trip ${i+1}<br>
+<b>${t.name}</b><br>
 
 ${t.date}<br>
 
 Distance:
-${t.distance.toFixed(1)} ft<br>
+${(t.distance/5280).toFixed(3)} miles<br>
 
 Time:
 ${t.time} sec<br>
@@ -606,20 +627,157 @@ Average:
 ${t.average.toFixed(2)} mph<br>
 
 Max:
-${t.max.toFixed(2)} mph
+${t.max.toFixed(2)} mph<br>
+
+<button onclick="downloadTrip(${i})">
+Download GPX
+</button>
+
 
 </div>
-`;
 
+`;
 
 
 });
 
 
-
 document.getElementById("history")
 .innerHTML=html;
 
+
+}
+
+
+
+
+
+function downloadLastTrip(){
+
+
+if(lastTrip){
+
+makeGPX(lastTrip);
+
+}
+
+else{
+
+alert("No trip available");
+
+}
+
+
+}
+
+
+
+
+function downloadTrip(index){
+
+
+let trips=
+JSON.parse(
+localStorage.getItem("kayakTrips")
+||
+"[]"
+);
+
+
+makeGPX(trips[index]);
+
+
+}
+
+
+
+
+function makeGPX(trip){
+
+
+let gpx=
+`<?xml version="1.0" encoding="UTF-8"?>
+
+<gpx version="1.1"
+creator="Kayak GPS">
+
+<trk>
+
+<name>${trip.name}</name>
+
+<trkseg>
+`;
+
+
+
+trip.points.forEach(function(p){
+
+
+gpx+=`
+
+<trkpt lat="${p.lat}" lon="${p.lon}">
+
+<time>${p.time}</time>
+
+</trkpt>
+
+`;
+
+});
+
+
+
+gpx+=`
+
+</trkseg>
+
+</trk>
+
+</gpx>
+`;
+
+
+
+let blob=
+new Blob(
+[gpx],
+{
+type:"application/gpx+xml"
+}
+);
+
+
+let url=
+URL.createObjectURL(blob);
+
+
+
+let a=
+document.createElement("a");
+
+
+a.href=url;
+
+
+a.download=
+trip.name+".gpx";
+
+
+a.click();
+
+
+}
+
+
+
+
+function clearTrips(){
+
+
+localStorage.removeItem("kayakTrips");
+
+
+showTrips();
 
 
 }
