@@ -3,51 +3,45 @@
 
 <head>
 
-<title>Kayak GPS Tracker</title>
+<title>Kayak GPS</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
 <style>
 
 body {
     font-family: Arial;
-    text-align:center;
-    margin:0;
-}
-
-h1 {
-    margin:10px;
+    text-align: center;
+    margin: 0;
 }
 
 button {
-    font-size:18px;
-    padding:10px;
-    margin:5px;
+    font-size: 18px;
+    padding: 10px;
+    margin: 5px;
 }
 
 input {
-    font-size:18px;
-    padding:8px;
-    width:80%;
+    font-size: 18px;
+    padding: 8px;
 }
 
 .box {
-    font-size:20px;
-    margin:8px;
+    font-size: 20px;
+    margin: 8px;
 }
 
 #map {
-    height:55vh;
-    width:100%;
+    height: 55vh;
+    width: 100%;
 }
 
 .trip {
-    border:1px solid #999;
-    margin:8px;
-    padding:8px;
-    border-radius:8px;
+    border: 1px solid #999;
+    margin: 8px;
+    padding: 8px;
 }
 
 </style>
@@ -67,14 +61,9 @@ input {
 <br>
 
 
-<button onclick="startTrip()">
-Start Trip
-</button>
+<button onclick="startTrip()">Start Trip</button>
 
-
-<button onclick="stopTrip()">
-Stop Trip
-</button>
+<button onclick="stopTrip()">Stop Trip</button>
 
 
 <div class="box">
@@ -104,25 +93,35 @@ Average:
 
 
 <div class="box">
-Max:
+Maximum:
 <span id="max">0</span> mph
 </div>
 
 
+<div class="box">
+GPS Points:
+<span id="points">0</span>
+</div>
+
+
 <button onclick="downloadLastTrip()">
-Download Last Trip GPX
+Download Last GPX
 </button>
 
 
 <button onclick="clearTrips()">
-Clear Saved Trips
+Clear Trips
 </button>
+
+
+<div id="status"></div>
 
 
 <div id="map"></div>
 
 
 <h2>Saved Trips</h2>
+
 
 <div id="history"></div>
 
@@ -134,8 +133,7 @@ Clear Saved Trips
 <script>
 
 
-let map =
-L.map('map');
+let map = L.map('map');
 
 
 L.tileLayer(
@@ -147,7 +145,7 @@ maxZoom:19
 
 
 
-let marker;
+let marker = null;
 
 
 let track =
@@ -161,184 +159,143 @@ weight:5
 
 
 
-let points=[];
+let points = [];
 
-let tracking=false;
+let tracking = false;
 
-let lastPoint=null;
+let lastPoint = null;
 
-let distance=0;
+let distance = 0;
 
-let startTime;
+let startTime = null;
 
-let timer;
+let timer = null;
 
+let speedTotal = 0;
 
-let speedTotal=0;
+let speedCount = 0;
 
-let speedCount=0;
+let maxSpeed = 0;
 
-let maxSpeed=0;
-
-
-let lastTrip=null;
+let lastTrip = null;
 
 
 
 function startTrip(){
 
+points = [];
 
-points=[];
+distance = 0;
 
-distance=0;
+speedTotal = 0;
 
-speedTotal=0;
+speedCount = 0;
 
-speedCount=0;
+maxSpeed = 0;
 
-maxSpeed=0;
-
-lastPoint=null;
+lastPoint = null;
 
 
 track.setLatLngs([]);
 
 
-tracking=true;
+tracking = true;
 
 
-startTime=new Date();
+startTime = new Date();
 
 
-timer=setInterval(function(){
-
+timer = setInterval(function(){
 
 let seconds =
-Math.floor(
-(new Date()-startTime)/1000
-);
+Math.floor((new Date()-startTime)/1000);
 
 
-document.getElementById("time")
-.innerHTML=seconds;
+document.getElementById("time").innerHTML = seconds;
 
 
 },1000);
 
 
-alert("Trip started");
+document.getElementById("status").innerHTML =
+"Tracking";
 
 
 }
-
 
 
 
 function stopTrip(){
 
 
-tracking=false;
+tracking = false;
 
 
 clearInterval(timer);
 
 
-
-let trip={
-
+let trip = {
 
 name:
-document.getElementById("tripName").value
-||
-"Unnamed Trip",
-
+document.getElementById("tripName").value || "Unnamed Trip",
 
 date:
 new Date().toLocaleString(),
 
-
-distance:distance,
-
+distance: distance,
 
 time:
-Math.floor(
-(new Date()-startTime)/1000
-),
-
+Math.floor((new Date()-startTime)/1000),
 
 average:
-speedCount?
-speedTotal/speedCount:
-0,
-
+speedCount ? speedTotal/speedCount : 0,
 
 max:maxSpeed,
 
-
 points:points
 
-
 };
-
 
 
 saveTrip(trip);
 
 
-lastTrip=trip;
+lastTrip = trip;
 
 
 showTrips();
 
 
-alert("Trip saved");
+document.getElementById("status").innerHTML =
+"Trip Saved";
 
 
 }
-
-
-
-
-
 navigator.geolocation.watchPosition(
-
 
 function(position){
 
 
+let lat = position.coords.latitude;
 
-let lat =
-position.coords.latitude;
-
-
-let lon =
-position.coords.longitude;
+let lon = position.coords.longitude;
 
 
-
-let current =
-[lat,lon];
+let current = [lat,lon];
 
 
 
 if(!marker){
 
-
-marker =
-L.marker(current)
-.addTo(map);
-
+marker = L.marker(current).addTo(map);
 
 map.setView(current,18);
-
 
 }
 
 else{
 
-
 marker.setLatLng(current);
-
 
 }
 
@@ -347,37 +304,29 @@ marker.setLatLng(current);
 if(tracking){
 
 
-
 if(lastPoint){
 
 
-
-let d =
-getDistance(
-
+let d = getDistance(
 lastPoint[0],
 lastPoint[1],
 lat,
 lon
-
 );
 
 
 
-if(d>5){
+if(d > 5){
 
 
 distance += d;
 
 
-document.getElementById("distance")
-.innerHTML =
+document.getElementById("distance").innerHTML =
 distance.toFixed(1);
 
 
-
-document.getElementById("miles")
-.innerHTML =
+document.getElementById("miles").innerHTML =
 (distance/5280).toFixed(3);
 
 
@@ -394,15 +343,22 @@ time:new Date().toISOString()
 
 
 
+document.getElementById("points").innerHTML =
+points.length;
+
+
+
 track.setLatLngs(
-points.map(
-p=>[p.lat,p.lon]
-)
+points.map(function(p){
+
+return [p.lat,p.lon];
+
+})
 );
 
 
 
-lastPoint=current;
+lastPoint = current;
 
 
 }
@@ -414,7 +370,7 @@ lastPoint=current;
 else{
 
 
-lastPoint=current;
+lastPoint = current;
 
 
 points.push({
@@ -428,35 +384,36 @@ time:new Date().toISOString()
 });
 
 
+document.getElementById("points").innerHTML =
+points.length;
+
+
+}
+
+
 }
 
 
 
-}
+
+let speed = position.coords.speed;
 
 
+if(speed && speed > 0){
 
-
-let speed =
-position.coords.speed;
-
-
-if(speed && speed>0){
-
-speed*=2.23694;
+speed = speed * 2.23694;
 
 }
 
 else{
 
-speed=0;
+speed = 0;
 
 }
 
 
 
-document.getElementById("speed")
-.innerHTML =
+document.getElementById("speed").innerHTML =
 speed.toFixed(2);
 
 
@@ -464,25 +421,22 @@ speed.toFixed(2);
 if(tracking){
 
 
-speedTotal+=speed;
+speedTotal += speed;
 
 speedCount++;
 
 
-document.getElementById("average")
-.innerHTML =
-(speedTotal/speedCount)
-.toFixed(2);
+document.getElementById("average").innerHTML =
+(speedTotal/speedCount).toFixed(2);
 
 
 
-if(speed>maxSpeed){
+if(speed > maxSpeed){
 
-maxSpeed=speed;
+maxSpeed = speed;
 
 
-document.getElementById("max")
-.innerHTML =
+document.getElementById("max").innerHTML =
 maxSpeed.toFixed(2);
 
 }
@@ -495,14 +449,10 @@ maxSpeed.toFixed(2);
 },
 
 
-
 function(error){
 
-alert(
-"GPS Error: "
-+
-error.message
-);
+document.getElementById("status").innerHTML =
+"GPS Error: " + error.message;
 
 },
 
@@ -523,7 +473,6 @@ timeout:10000
 
 
 
-
 function getDistance(
 lat1,
 lon1,
@@ -532,25 +481,25 @@ lon2
 ){
 
 
-let R=6371000;
+let R = 6371000;
 
 
-let dLat=
+let dLat =
 (lat2-lat1)*Math.PI/180;
 
 
-let dLon=
+let dLon =
 (lon2-lon1)*Math.PI/180;
 
 
-let a=
-Math.sin(dLat/2)**2+
-Math.cos(lat1*Math.PI/180)*
-Math.cos(lat2*Math.PI/180)*
+let a =
+Math.sin(dLat/2)**2 +
+Math.cos(lat1*Math.PI/180) *
+Math.cos(lat2*Math.PI/180) *
 Math.sin(dLon/2)**2;
 
 
-let c=
+let c =
 2*Math.atan2(
 Math.sqrt(a),
 Math.sqrt(1-a)
@@ -558,6 +507,7 @@ Math.sqrt(1-a)
 
 
 return R*c*3.28084;
+
 
 }
 
@@ -568,11 +518,9 @@ return R*c*3.28084;
 function saveTrip(trip){
 
 
-let trips=
+let trips =
 JSON.parse(
-localStorage.getItem("kayakTrips")
-||
-"[]"
+localStorage.getItem("kayakTrips") || "[]"
 );
 
 
@@ -594,22 +542,19 @@ JSON.stringify(trips)
 function showTrips(){
 
 
-let trips=
+let trips =
 JSON.parse(
-localStorage.getItem("kayakTrips")
-||
-"[]"
+localStorage.getItem("kayakTrips") || "[]"
 );
 
 
-let html="";
-
+let html = "";
 
 
 trips.forEach(function(t,i){
 
 
-html+=`
+html += `
 
 <div class="trip">
 
@@ -620,30 +565,21 @@ ${t.date}<br>
 Distance:
 ${(t.distance/5280).toFixed(3)} miles<br>
 
-Time:
-${t.time} sec<br>
-
-Average:
-${t.average.toFixed(2)} mph<br>
-
-Max:
-${t.max.toFixed(2)} mph<br>
+Points:
+${t.points.length}<br>
 
 <button onclick="downloadTrip(${i})">
 Download GPX
 </button>
 
-
 </div>
 
 `;
 
-
 });
 
 
-document.getElementById("history")
-.innerHTML=html;
+document.getElementById("history").innerHTML = html;
 
 
 }
@@ -663,12 +599,13 @@ makeGPX(lastTrip);
 
 else{
 
-alert("No trip available");
+alert("No current trip available");
 
 }
 
 
 }
+
 
 
 
@@ -676,11 +613,9 @@ alert("No trip available");
 function downloadTrip(index){
 
 
-let trips=
+let trips =
 JSON.parse(
-localStorage.getItem("kayakTrips")
-||
-"[]"
+localStorage.getItem("kayakTrips") || "[]"
 );
 
 
@@ -692,14 +627,16 @@ makeGPX(trips[index]);
 
 
 
+
 function makeGPX(trip){
 
 
-let gpx=
+let gpx =
 `<?xml version="1.0" encoding="UTF-8"?>
 
 <gpx version="1.1"
-creator="Kayak GPS">
+creator="Kayak GPS"
+xmlns="http://www.topografix.com/GPX/1/1">
 
 <trk>
 
@@ -713,7 +650,7 @@ creator="Kayak GPS">
 trip.points.forEach(function(p){
 
 
-gpx+=`
+gpx += `
 
 <trkpt lat="${p.lat}" lon="${p.lon}">
 
@@ -727,7 +664,7 @@ gpx+=`
 
 
 
-gpx+=`
+gpx += `
 
 </trkseg>
 
@@ -738,7 +675,7 @@ gpx+=`
 
 
 
-let blob=
+let blob =
 new Blob(
 [gpx],
 {
@@ -747,26 +684,47 @@ type:"application/gpx+xml"
 );
 
 
-let url=
+
+let url =
 URL.createObjectURL(blob);
 
 
 
-let a=
+let a =
 document.createElement("a");
 
 
-a.href=url;
+a.href = url;
 
 
-a.download=
-trip.name+".gpx";
+a.download =
+trip.name + ".gpx";
+
+
+document.body.appendChild(a);
 
 
 a.click();
 
 
+document.body.removeChild(a);
+
+
+
+setTimeout(function(){
+
+URL.revokeObjectURL(url);
+
+},1000);
+
+
+
+document.getElementById("status").innerHTML =
+"GPX Created";
+
+
 }
+
 
 
 
