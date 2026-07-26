@@ -3,7 +3,7 @@
 
 <head>
 
-<title>Kayak GPS</title>
+<title>Kayak GPS Tracker</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -14,17 +14,28 @@ href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 body {
     font-family: Arial;
-    text-align:center;
+    text-align: center;
+    margin: 0;
 }
 
-#map {
-    height: 60vh;
-    width:100%;
+h1 {
+    margin: 10px;
 }
 
 .box {
-    font-size:22px;
-    margin:10px;
+    font-size: 22px;
+    margin: 10px;
+}
+
+#map {
+    height: 65vh;
+    width: 100%;
+}
+
+button {
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 5px;
 }
 
 </style>
@@ -34,12 +45,26 @@ body {
 
 <body>
 
+
 <h1>Kayak GPS</h1>
+
+
+<button onclick="startTracking()">
+Start Tracking
+</button>
+
+
+<button onclick="stopTracking()">
+Stop Tracking
+</button>
+
+
 
 <div class="box">
 Speed:
 <span id="speed">0</span> mph
 </div>
+
 
 <div class="box">
 Distance:
@@ -50,55 +75,92 @@ Distance:
 <div id="map"></div>
 
 
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 
 <script>
 
 
-let map =
-L.map('map');
+// MAP SETUP
+
+let map = L.map('map');
 
 
 L.tileLayer(
 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
 {
-maxZoom:19
+    maxZoom:19
 }
 ).addTo(map);
 
 
 
-let marker;
+let marker = null;
+
+
+let points = [];
+
 
 let track =
 L.polyline(
 [],
 {
-color:'blue'
+    color:'blue',
+    weight:5
 }
 ).addTo(map);
 
 
 
-let points=[];
+let tracking = false;
 
-let totalDistance=0;
 
-let lastPosition=null;
+let lastPoint = null;
+
+
+let totalDistance = 0;
+
+
+let lastGPS = null;
+
+
+
+function startTracking(){
+
+tracking = true;
+
+alert("Tracking Started");
+
+}
+
+
+
+function stopTracking(){
+
+tracking = false;
+
+alert("Tracking Stopped");
+
+}
+
 
 
 
 navigator.geolocation.watchPosition(
 
+
 function(position){
+
 
 
 let lat =
 position.coords.latitude;
 
+
 let lon =
 position.coords.longitude;
+
 
 
 let current =
@@ -106,44 +168,62 @@ let current =
 
 
 
+// FIRST GPS POINT
+
 if(!marker){
 
 marker =
 L.marker(current)
 .addTo(map);
 
-map.setView(current,17);
+
+map.setView(current,18);
 
 }
+
+
+
+
 else{
+
 
 marker.setLatLng(current);
 
+
 }
 
 
 
-points.push(current);
+// ONLY DRAW WHEN TRACKING
 
-track.setLatLngs(points);
+if(tracking){
 
 
 
-if(lastPosition){
+if(lastPoint){
+
 
 
 let distance =
 getDistance(
 
-lastPosition.coords.latitude,
-lastPosition.coords.longitude,
+lastPoint[0],
+lastPoint[1],
 lat,
 lon
 
 );
 
 
+
+// ignore GPS noise
+
+if(distance > 5){
+
+
+
 totalDistance += distance;
+
 
 
 document.getElementById("distance")
@@ -151,24 +231,63 @@ document.getElementById("distance")
 totalDistance.toFixed(1);
 
 
+
+points.push(current);
+
+
+track.setLatLngs(points);
+
+
+
+lastPoint=current;
+
+
+
 }
 
 
+
+}
+
+
+
+else{
+
+
+points.push(current);
+
+
+track.setLatLngs(points);
+
+
+lastPoint=current;
+
+
+}
+
+
+
+}
+
+
+
+
+// SPEED
 
 let speed =
 position.coords.speed;
 
 
-if(speed){
+if(speed && speed > 0){
 
-speed *= 2.23694;
+speed =
+speed * 2.23694;
 
 }
 
-
 else{
 
-speed=0;
+speed = 0;
 
 }
 
@@ -180,22 +299,33 @@ speed.toFixed(2);
 
 
 
-lastPosition=position;
+lastGPS = position;
+
 
 
 },
+
 
 
 function(error){
 
-alert(error.message);
+alert(
+"GPS Error: "
++
+error.message
+);
 
 },
 
 
+
 {
 
-enableHighAccuracy:true
+enableHighAccuracy:true,
+
+maximumAge:1000,
+
+timeout:10000
 
 }
 
@@ -205,39 +335,61 @@ enableHighAccuracy:true
 
 
 
-function getDistance(lat1,lon1,lat2,lon2){
 
-let R=6371000;
+// DISTANCE CALCULATION
+
+function getDistance(
+lat1,
+lon1,
+lat2,
+lon2
+){
+
+
+let R = 6371000;
 
 
 let dLat =
-(lat2-lat1)*Math.PI/180;
+(lat2-lat1)
+*
+Math.PI/180;
 
 
 let dLon =
-(lon2-lon1)*Math.PI/180;
+(lon2-lon1)
+*
+Math.PI/180;
 
 
 let a =
-Math.sin(dLat/2)**2 +
+Math.sin(dLat/2)
+*
+Math.sin(dLat/2)
++
+Math.cos(lat1*Math.PI/180)
+*
+Math.cos(lat2*Math.PI/180)
+*
+Math.sin(dLon/2)
+*
+Math.sin(dLon/2);
 
-Math.cos(lat1*Math.PI/180) *
-
-Math.cos(lat2*Math.PI/180) *
-
-Math.sin(dLon/2)**2;
 
 
 let c =
-2*Math.atan2(
+2 *
+Math.atan2(
 Math.sqrt(a),
 Math.sqrt(1-a)
 );
 
 
+
 return R*c*3.28084;
 
+
 }
+
 
 
 </script>
