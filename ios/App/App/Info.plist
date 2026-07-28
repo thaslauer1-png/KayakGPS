@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Kayak GPS uses your location to track your paddle route, distance, and speed.</string>
+
 </dict>
 </plist>
