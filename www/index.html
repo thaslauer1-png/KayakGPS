@@ -841,56 +841,45 @@ makeGPX(trips[index]);
 
 
 
-function saveFile(data,name,type){
 
+async function saveFile(data,name,type){
 
-let blob =
-new Blob(
-[data],
-{
-type:type
-}
-);
+    const blob = new Blob([data], {type:type});
 
+    const base64 = await blobToBase64(blob);
 
+    await Capacitor.Plugins.Share.share({
 
-let url =
-URL.createObjectURL(blob);
+        title: name,
 
+        text: "Kayak GPS file",
 
+        files: [base64]
 
-let a =
-document.createElement("a");
-
-
-a.href=url;
-
-
-a.download=name;
-
-
-document.body.appendChild(a);
-
-
-a.click();
-
-
-document.body.removeChild(a);
-
-
-
-setTimeout(function(){
-
-URL.revokeObjectURL(url);
-
-},1000);
-
+    });
 
 }
 
 
+function blobToBase64(blob){
 
+    return new Promise((resolve,reject)=>{
 
+        let reader = new FileReader();
+
+        reader.onloadend = function(){
+
+            resolve(reader.result);
+
+        };
+
+        reader.onerror = reject;
+
+        reader.readAsDataURL(blob);
+
+    });
+
+}
 
 
 
