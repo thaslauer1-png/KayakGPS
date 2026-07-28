@@ -28,6 +28,7 @@ jobs:
         run: |
           sudo gem install cocoapods
           cd ios/App
+          pod init
           pod install
 
       - name: Build iOS
