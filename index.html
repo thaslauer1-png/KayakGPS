@@ -51,18 +51,13 @@ input {
 
 </head>
 
-
 <body>
-
 
 <h1>Kayak GPS</h1>
 
-
 <input id="tripName" placeholder="Trip name">
 
-
 <br>
-
 
 <button onclick="startTrip()">Start Trip</button>
 
@@ -74,7 +69,6 @@ Speed:
 <span id="speed">0</span> mph
 </div>
 
-
 <div class="box">
 Distance:
 <span id="distance">0</span> ft
@@ -82,12 +76,10 @@ Distance:
 <span id="miles">0</span> miles
 </div>
 
-
 <div class="box">
 Time:
 <span id="time">0</span> sec
 </div>
-
 
 <div class="box">
 GPS Points:
@@ -99,7 +91,6 @@ GPS Points:
 Download Last GPX
 </button>
 
-
 <button onclick="downloadLastKML()">
 Download Last KML
 </button>
@@ -107,25 +98,19 @@ Download Last KML
 
 <div id="status"></div>
 
-
 <div id="map"></div>
 
 
 <h2>Saved Trips</h2>
 
-
 <div id="history"></div>
-
 
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-
 <script>
 
-
 let map = L.map('map');
-
 
 L.tileLayer(
 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -135,9 +120,7 @@ maxZoom:19
 ).addTo(map);
 
 
-
 let marker = null;
-
 
 let line =
 L.polyline(
@@ -147,7 +130,6 @@ color:"blue",
 weight:5
 }
 ).addTo(map);
-
 
 
 let tracking = false;
@@ -165,7 +147,6 @@ let timer;
 let lastTrip = null;
 
 
-
 function startTrip(){
 
 points = [];
@@ -176,16 +157,13 @@ lastPoint = null;
 
 line.setLatLngs([]);
 
-
 document.getElementById("distance").innerHTML = 0;
 
 document.getElementById("miles").innerHTML = 0;
 
 document.getElementById("points").innerHTML = 0;
 
-
 tracking = true;
-
 
 startTime = new Date();
 
@@ -204,8 +182,6 @@ document.getElementById("status").innerHTML =
 }
 
 
-
-
 function stopTrip(){
 
 tracking = false;
@@ -215,7 +191,6 @@ clearInterval(timer);
 
 let duration =
 Math.floor((new Date()-startTime)/1000);
-
 
 
 let trip = {
@@ -237,12 +212,9 @@ points:points
 
 saveTrip(trip);
 
-
 lastTrip = trip;
 
-
 showTrips();
-
 
 document.getElementById("status").innerHTML =
 "Saved";
@@ -252,14 +224,11 @@ navigator.geolocation.watchPosition(
 
 function(position){
 
-
 let lat = position.coords.latitude;
 
 let lon = position.coords.longitude;
 
-
 let current = [lat,lon];
-
 
 
 if(!marker){
@@ -292,7 +261,6 @@ lat,
 lon
 
 );
-
 
 
 if(d > 5){
@@ -331,10 +299,8 @@ document.getElementById("distance").innerHTML =
 distance.toFixed(1);
 
 
-
 document.getElementById("miles").innerHTML =
 (distance/5280).toFixed(3);
-
 
 
 document.getElementById("points").innerHTML =
@@ -391,7 +357,6 @@ speed = 0;
 }
 
 
-
 document.getElementById("speed").innerHTML =
 speed.toFixed(2);
 
@@ -422,10 +387,6 @@ timeout:10000
 
 
 
-
-
-
-
 function getDistance(lat1,lon1,lat2,lon2){
 
 
@@ -450,7 +411,6 @@ Math.cos(lat2*Math.PI/180) *
 Math.sin(dLon/2)**2;
 
 
-
 let c =
 2*Math.atan2(
 Math.sqrt(a),
@@ -458,14 +418,9 @@ Math.sqrt(1-a)
 );
 
 
-
 return R*c*3.28084;
 
 }
-
-
-
-
 
 
 
@@ -478,9 +433,7 @@ localStorage.getItem("kayakTrips") || "[]"
 );
 
 
-
 trips.push(trip);
-
 
 
 localStorage.setItem(
@@ -496,11 +449,6 @@ JSON.stringify(trips)
 
 
 
-
-
-
-
-
 function showTrips(){
 
 
@@ -510,17 +458,13 @@ localStorage.getItem("kayakTrips") || "[]"
 );
 
 
-
 let html = "";
-
 
 
 trips.forEach(function(t,i){
 
 
-let paddle =
-estimatePaddle(t);
-
+let paddle = estimatePaddle(t);
 
 
 html += `
@@ -581,8 +525,6 @@ Delete
 
 `;
 
-
-
 });
 
 
@@ -591,9 +533,6 @@ html;
 
 
 }
-
-
-
 
 
 
@@ -606,12 +545,10 @@ localStorage.getItem("kayakTrips") || "[]"
 );
 
 
-
 if(confirm("Delete this trip?")){
 
 
 trips.splice(index,1);
-
 
 
 localStorage.setItem(
@@ -623,7 +560,6 @@ JSON.stringify(trips)
 );
 
 
-
 showTrips();
 
 
@@ -633,9 +569,8 @@ document.getElementById("status").innerHTML =
 
 }
 
+
 }
-
-
 
 
 
@@ -652,16 +587,8 @@ let a = trip.points[i-1];
 let b = trip.points[i];
 
 
-let t1 =
-new Date(a.time);
-
-
-let t2 =
-new Date(b.time);
-
-
 let seconds =
-(t2-t1)/1000;
+(new Date(b.time)-new Date(a.time))/1000;
 
 
 let d =
@@ -675,7 +602,6 @@ b.lon
 
 let mph =
 (d/5280)/(seconds/3600);
-
 
 
 if(mph > 0.2 && mph < 10){
@@ -707,13 +633,7 @@ speed:speed
 
 };
 
-
 }
-
-
-
-
-
 function formatTime(seconds){
 
 if(!seconds){
@@ -755,7 +675,6 @@ String(secs).padStart(2,"0");
 
 
 
-
 function averageSpeed(distanceFeet,seconds){
 
 
@@ -770,6 +689,9 @@ return ((distanceFeet/5280)/(seconds/3600))
 .toFixed(2);
 
 }
+
+
+
 function downloadLastGPX(){
 
 if(lastTrip){
@@ -785,7 +707,6 @@ alert("No trip available");
 }
 
 }
-
 
 
 
@@ -808,8 +729,6 @@ alert("No trip available");
 
 
 
-
-
 function downloadTrip(index,type){
 
 
@@ -817,7 +736,6 @@ let trips =
 JSON.parse(
 localStorage.getItem("kayakTrips") || "[]"
 );
-
 
 
 if(type=="kml"){
@@ -832,16 +750,14 @@ makeGPX(trips[index]);
 
 }
 
-
 }
 
 
 
 
+// iPhone friendly file sharing
 
-
-
-function saveFile(data,name,type){
+async function saveFile(data,name,type){
 
 
 let blob =
@@ -853,10 +769,49 @@ type:type
 );
 
 
+let file =
+new File(
+[blob],
+name,
+{
+type:type
+}
+);
+
+
+
+if(navigator.share){
+
+
+try{
+
+
+await navigator.share({
+
+files:[file],
+
+title:name
+
+});
+
+
+}
+
+catch(err){
+
+console.log("Share cancelled",err);
+
+}
+
+
+}
+
+
+else{
+
 
 let url =
 URL.createObjectURL(blob);
-
 
 
 let a =
@@ -878,7 +833,6 @@ a.click();
 document.body.removeChild(a);
 
 
-
 setTimeout(function(){
 
 URL.revokeObjectURL(url);
@@ -889,6 +843,7 @@ URL.revokeObjectURL(url);
 }
 
 
+}
 
 
 
@@ -965,9 +920,6 @@ trip.name+".gpx",
 
 
 
-
-
-
 function makeKML(trip){
 
 
@@ -979,9 +931,7 @@ let kml =
 
 <Document>
 
-
 <name>${trip.name}</name>
-
 
 
 <Style id="kayakTrack">
@@ -997,22 +947,16 @@ let kml =
 </Style>
 
 
-
 <Placemark>
 
-
 <name>${trip.name}</name>
-
 
 <styleUrl>#kayakTrack</styleUrl>
 
 
-
 <LineString>
 
-
 <tessellate>1</tessellate>
-
 
 <altitudeMode>clampToGround</altitudeMode>
 
@@ -1040,15 +984,11 @@ kml +=
 
 </coordinates>
 
-
 </LineString>
-
 
 </Placemark>
 
-
 </Document>
-
 
 </kml>
 
@@ -1073,8 +1013,6 @@ trip.name+".kml",
 
 
 
-
-
 // Register offline app service worker
 
 if ("serviceWorker" in navigator){
@@ -1084,13 +1022,9 @@ navigator.serviceWorker.register("service-worker.js");
 }
 
 
-
-
-
 // Load saved trips
 
 showTrips();
-
 
 
 </script>
