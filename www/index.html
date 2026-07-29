@@ -124,6 +124,8 @@ Download Last KML
 <script>
 
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.css"></script>
+
 let map = L.map('map');
 
 
@@ -836,25 +838,38 @@ makeGPX(trips[index]);
 }
 
 
-
-
-
-
-
-
 async function saveFile(data,name,type){
 
     const blob = new Blob([data], {type:type});
 
     const base64 = await blobToBase64(blob);
 
+
+    await Filesystem.writeFile({
+
+        path:name,
+
+        data:base64.split(",")[1],
+
+        directory:"DOCUMENTS"
+
+    });
+
+
+    const fileUri = await Filesystem.getUri({
+
+        directory:"DOCUMENTS",
+
+        path:name
+
+    });
+
+
     await Capacitor.Plugins.Share.share({
 
-        title: name,
+        title:name,
 
-        text: "Kayak GPS file",
-
-        files: [base64]
+        files:[fileUri.uri]
 
     });
 
@@ -867,19 +882,23 @@ function blobToBase64(blob){
 
         let reader = new FileReader();
 
-        reader.onloadend = function(){
+        reader.onloadend=function(){
 
             resolve(reader.result);
 
         };
 
-        reader.onerror = reject;
+        reader.onerror=reject;
 
         reader.readAsDataURL(blob);
 
     });
 
 }
+
+
+
+
 
 
 
