@@ -118,13 +118,15 @@ Download Last KML
 
 
 
-<div id="history"></div>
 
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 
 <script>
+
+const { Filesystem } = Capacitor.Plugins;
+const { Share } = Capacitor.Plugins;
 
 let map = L.map('map');
 
@@ -872,6 +874,7 @@ async function saveFile(data,name,type){
 
 });
 
+}
 
 function blobToBase64(blob){
 
