@@ -841,6 +841,8 @@ makeGPX(trips[index]);
 
 async function saveFile(data,name,type){
 
+alert("saveFile started: " + name);
+
     const blob = new Blob([data], {type:type});
 
     const base64 = await blobToBase64(blob);
