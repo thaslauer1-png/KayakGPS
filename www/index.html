@@ -118,16 +118,15 @@ Download Last KML
 
 
 
+<div id="history"></div>
+
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 
 <script>
 
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.css"></script>
-
 let map = L.map('map');
-
 
 L.tileLayer(
 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -865,15 +864,13 @@ async function saveFile(data,name,type){
     });
 
 
-    await Capacitor.Plugins.Share.share({
+   await Share.share({
 
-        title:name,
+    title:name,
 
-        files:[fileUri.uri]
+    url:fileUri.uri
 
-    });
-
-}
+});
 
 
 function blobToBase64(blob){
