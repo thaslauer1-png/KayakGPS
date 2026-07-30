@@ -839,65 +839,57 @@ makeGPX(trips[index]);
 
 }
 
+
 async function saveFile(data, name, type) {
 
     try {
 
-        alert("1. saveFile started");
+        alert("Creating file: " + name);
 
-        const blob = new Blob([data], { type: type });
-
-        alert("2. Blob created");
+        const blob = new Blob([data], {type:type});
 
         const base64 = await blobToBase64(blob);
 
-        alert("3. Base64 complete");
-
         await Filesystem.writeFile({
-            path: name,
-            data: base64.split(",")[1],
-            directory:"CACHE"
+
+            path:name,
+
+            data:base64.split(",")[1],
+
+            directory:"DOCUMENTS"
+
         });
 
-        alert("4. File written");
 
         const fileUri = await Filesystem.getUri({
-            directory:"CACHE",
-            path: name
+
+            directory:"DOCUMENTS",
+
+            path:name
+
         });
 
-        alert("5. URI = " + fileUri.uri);
 
-await Share.share({
+        await Share.share({
 
-    title:name,
+            title:name,
 
-    text:"Kayak GPS Track",
+            url:fileUri.uri,
 
-    url:fileUri.uri,
+            dialogTitle:"Save Kayak Track"
 
-    dialogTitle:"Export Kayak Track"
-
-});
-        
-
-        alert("6. Share complete");
-
-    } 
-catch (e) {
-
-    alert(
-        "ERROR:\n" +
-        "message: " + e.message + "\n" +
-        "name: " + e.name + "\n" +
-        "stack: " + e.stack
-    );
+        });
 
 
     }
+
+    catch(e){
+
+        alert("ERROR: " + e.message);
+
+    }
+
 }
-
-
 
 function blobToBase64(blob){
 
