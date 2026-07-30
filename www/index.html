@@ -868,15 +868,18 @@ async function saveFile(data, name, type) {
 
         alert("5. URI = " + fileUri.uri);
 
-        await Share.share({
+await Share.share({
 
     title:name,
 
     text:"Kayak GPS Track",
 
-    url:fileUri.uri
+    url:fileUri.uri,
+
+    dialogTitle:"Export Kayak Track"
 
 });
+        
 
         alert("6. Share complete");
 
