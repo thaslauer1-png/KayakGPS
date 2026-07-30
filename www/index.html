@@ -856,22 +856,27 @@ async function saveFile(data, name, type) {
         await Filesystem.writeFile({
             path: name,
             data: base64.split(",")[1],
-            directory: "DOCUMENTS"
+            directory:"CACHE"
         });
 
         alert("4. File written");
 
         const fileUri = await Filesystem.getUri({
-            directory: "DOCUMENTS",
+            directory:"CACHE",
             path: name
         });
 
         alert("5. URI = " + fileUri.uri);
 
         await Share.share({
-            title: name,
-            url: fileUri.uri
-        });
+
+    title:name,
+
+    text:"Kayak GPS Track",
+
+    url:fileUri.uri
+
+});
 
         alert("6. Share complete");
 
