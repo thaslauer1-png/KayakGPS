@@ -838,64 +838,47 @@ makeGPX(trips[index]);
 
 }
 
+async function saveFile(data, name, type) {
 
-async function saveFile(data,name,type){
+    try {
 
-alert("saveFile started: " + name);
+        alert("1. saveFile started");
 
-    const blob = new Blob([data], {type:type});
+        const blob = new Blob([data], { type: type });
 
-    const base64 = await blobToBase64(blob);
+        alert("2. Blob created");
 
+        const base64 = await blobToBase64(blob);
 
-    await Filesystem.writeFile({
+        alert("3. Base64 complete");
 
-        path:name,
+        await Filesystem.writeFile({
+            path: name,
+            data: base64.split(",")[1],
+            directory: "DOCUMENTS"
+        });
 
-        data:base64.split(",")[1],
+        alert("4. File written");
 
-        directory:"DOCUMENTS"
+        const fileUri = await Filesystem.getUri({
+            directory: "DOCUMENTS",
+            path: name
+        });
 
-    });
+        alert("5. URI = " + fileUri.uri);
 
+        await Share.share({
+            title: name,
+            url: fileUri.uri
+        });
 
-    const fileUri = await Filesystem.getUri({
+        alert("6. Share complete");
 
-        directory:"DOCUMENTS",
+    } catch (e) {
 
-        path:name
+        alert("ERROR:\n" + JSON.stringify(e));
 
-    });
-
-
-   await Share.share({
-
-    title:name,
-
-    url:fileUri.uri
-
-});
-
-}
-
-function blobToBase64(blob){
-
-    return new Promise((resolve,reject)=>{
-
-        let reader = new FileReader();
-
-        reader.onloadend=function(){
-
-            resolve(reader.result);
-
-        };
-
-        reader.onerror=reject;
-
-        reader.readAsDataURL(blob);
-
-    });
-
+    }
 }
 
 
