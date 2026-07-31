@@ -255,26 +255,7 @@ document.getElementById("status").innerHTML =
 
 function processGPS(lat, lon, speed){
 
-console.log("GPS:", lat, lon);
-
-}
-
-navigator.geolocation.watchPosition(
-
-function(position){
-
-
-let lat = position.coords.latitude;
-
-let lon = position.coords.longitude;
-
-let speed = position.coords.speed;
-
-processGPS(lat, lon, speed);
-
-
 let current = [lat,lon];
-
 
 
 if(!marker){
@@ -390,9 +371,6 @@ points.length;
 
 
 
-let speed = position.coords.speed;
-
-
 if(speed){
 
 speed = speed * 2.23694;
@@ -411,9 +389,24 @@ document.getElementById("speed").innerHTML =
 speed.toFixed(2);
 
 
+}
+
+
+
+
+navigator.geolocation.watchPosition(
+
+function(position){
+
+let lat = position.coords.latitude;
+
+let lon = position.coords.longitude;
+
+let speed = position.coords.speed;
+
+processGPS(lat, lon, speed);
 
 },
-
 
 function(error){
 
