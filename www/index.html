@@ -125,11 +125,9 @@ Download Last KML
 
 <script>
 
+
 const { Filesystem } = Capacitor.Plugins;
 const { Share } = Capacitor.Plugins;
-let BackgroundGeolocation = null;
-let gpsWatcherId = null;
-
 
 let map = L.map('map');
 
@@ -169,7 +167,7 @@ let startTime;
 let timer;
 
 let lastTrip = null;
-let gpsWatcherId = null;
+
 
 
 function startTrip(){
@@ -207,28 +205,14 @@ Math.floor((new Date()-startTime)/1000);
 document.getElementById("status").innerHTML =
 "Tracking";
 
-// startGPSWatcher();
-
 }
 
 
 
-/*
+
 function stopTrip(){
 
 tracking = false;
-
-if(gpsWatcherId){
-
-    BackgroundGeolocation.removeWatcher({
-        id:gpsWatcherId
-    });
-
-    gpsWatcherId = null;
-
-}
-
-*/
 
 clearInterval(timer);
 
@@ -268,51 +252,18 @@ document.getElementById("status").innerHTML =
 "Saved";
 
 }
+navigator.geolocation.watchPosition(
 
-async function startGPSWatcher(){
-
-try {
-
-gpsWatcherId = await BackgroundGeolocation.addWatcher(
-
-{
-    backgroundMessage:
-    "Kayak GPS is recording your trip",
-
-    backgroundTitle:
-    "Kayak GPS",
-
-    requestPermissions:true,
-
-    stale:false,
-
-    distanceFilter:5
-},
-
-(position, error)=>{
+function(position){
 
 
-if(error){
+let lat = position.coords.latitude;
 
-document.getElementById("status").innerHTML =
-"GPS Error: " + error.message;
-
-return;
-
-}
-
-
-if(!position){
-return;
-}
-
-
-let lat = position.latitude;
-
-let lon = position.longitude;
+let lon = position.coords.longitude;
 
 
 let current = [lat,lon];
+
 
 
 if(!marker){
@@ -346,123 +297,6 @@ lon
 
 );
 
-
-
-if(d > 5){
-
-
-distance += d;
-
-
-points.push({
-
-lat:lat,
-
-lon:lon,
-
-time:new Date().toISOString()
-
-});
-
-
-lastPoint=current;
-
-
-line.setLatLngs(
-
-points.map(function(p){
-
-return [p.lat,p.lon];
-
-})
-
-);
-
-
-
-document.getElementById("distance").innerHTML =
-distance.toFixed(1);
-
-
-
-document.getElementById("miles").innerHTML =
-(distance/5280).toFixed(3);
-
-
-
-document.getElementById("points").innerHTML =
-points.length;
-
-
-}
-
-
-}
-
-
-else{
-
-
-lastPoint=current;
-
-
-points.push({
-
-lat:lat,
-
-lon:lon,
-
-time:new Date().toISOString()
-
-});
-
-
-document.getElementById("points").innerHTML =
-points.length;
-
-
-}
-
-
-}
-
-
-
-let speed = position.speed;
-
-
-if(speed){
-
-speed = speed * 2.23694;
-
-}
-
-else{
-
-speed=0;
-
-}
-
-
-document.getElementById("speed").innerHTML =
-speed.toFixed(2);
-
-
-}
-
-);
-
-
-}
-
-catch(e){
-
-document.getElementById("status").innerHTML =
-"GPS Start Error: " + e.message;
-
-}
-
-}
 
 
 if(d > 5){
