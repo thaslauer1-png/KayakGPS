@@ -471,18 +471,99 @@ return;
 
 if(position){
 
+let lat = position.latitude;
+let lon = position.longitude;
+
+let current = [lat, lon];
+
 console.log(
 "Background GPS:",
-position.latitude,
-position.longitude
+lat,
+lon
 );
+
+
+if(tracking){
+
+if(lastPoint){
+
+let d = getDistance(
+lastPoint[0],
+lastPoint[1],
+lat,
+lon
+);
+
+
+if(d > 5){
+
+distance += d;
+
+
+points.push({
+
+lat:lat,
+
+lon:lon,
+
+time:new Date().toISOString()
+
+});
+
+
+lastPoint = current;
+
+
+line.setLatLngs(
+
+points.map(function(p){
+
+return [p.lat,p.lon];
+
+})
+
+);
+
+
+document.getElementById("distance").innerHTML =
+distance.toFixed(1);
+
+
+document.getElementById("miles").innerHTML =
+(distance/5280).toFixed(3);
+
+
+document.getElementById("points").innerHTML =
+points.length;
 
 }
 
 }
 
-);
+else{
 
+lastPoint = current;
+
+
+points.push({
+
+lat:lat,
+
+lon:lon,
+
+time:new Date().toISOString()
+
+});
+
+
+document.getElementById("points").innerHTML =
+points.length;
+
+}
+
+}
+
+}
 
 }
 
