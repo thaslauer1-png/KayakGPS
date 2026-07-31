@@ -170,7 +170,7 @@ let timer;
 
 let lastTrip = null;
 
-
+let backgroundWatcherId = null;
 
 function startTrip(){
 
@@ -206,6 +206,8 @@ Math.floor((new Date()-startTime)/1000);
 
 document.getElementById("status").innerHTML =
 "Tracking";
+
+startBackgroundGPS();
 
 }
 
@@ -427,7 +429,71 @@ timeout:10000
 );
 
 
+async function startBackgroundGPS(){
 
+if(!BackgroundGeolocation){
+    document.getElementById("status").innerHTML =
+    "Background GPS unavailable";
+    return;
+}
+
+
+try {
+
+backgroundWatcherId =
+await BackgroundGeolocation.addWatcher(
+
+{
+backgroundMessage:
+"Kayak GPS is recording your trip",
+
+backgroundTitle:
+"Kayak GPS",
+
+requestPermissions:true,
+
+stale:false,
+
+distanceFilter:5
+
+},
+
+(position,error)=>{
+
+
+if(error){
+
+console.log(error);
+return;
+
+}
+
+
+if(position){
+
+console.log(
+"Background GPS:",
+position.latitude,
+position.longitude
+);
+
+}
+
+}
+
+);
+
+
+}
+
+catch(e){
+
+document.getElementById("status").innerHTML =
+"Background GPS Error: " + e.message;
+
+}
+
+}
 
 
 
