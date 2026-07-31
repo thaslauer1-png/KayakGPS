@@ -252,6 +252,13 @@ document.getElementById("status").innerHTML =
 "Saved";
 
 }
+
+function processGPS(lat, lon, speed){
+
+console.log("GPS:", lat, lon);
+
+}
+
 navigator.geolocation.watchPosition(
 
 function(position){
@@ -260,6 +267,10 @@ function(position){
 let lat = position.coords.latitude;
 
 let lon = position.coords.longitude;
+
+let speed = position.coords.speed;
+
+processGPS(lat, lon, speed);
 
 
 let current = [lat,lon];
