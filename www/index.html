@@ -129,8 +129,6 @@ Download Last KML
 const { Filesystem } = Capacitor.Plugins;
 const { Share } = Capacitor.Plugins;
 
-const BackgroundGeolocation = Capacitor.Plugins.BackgroundGeolocation;
-
 let map = L.map('map');
 
 L.tileLayer(
@@ -170,7 +168,7 @@ let timer;
 
 let lastTrip = null;
 
-let backgroundWatcherId = null;
+
 
 function startTrip(){
 
@@ -206,8 +204,6 @@ Math.floor((new Date()-startTime)/1000);
 
 document.getElementById("status").innerHTML =
 "Tracking";
-
-startBackgroundGPS();
 
 }
 
@@ -429,152 +425,7 @@ timeout:10000
 );
 
 
-async function startBackgroundGPS(){
 
-if(!BackgroundGeolocation){
-    document.getElementById("status").innerHTML =
-    "Background GPS unavailable";
-    return;
-}
-
-
-try {
-
-backgroundWatcherId =
-await BackgroundGeolocation.addWatcher(
-
-{
-backgroundMessage:
-"Kayak GPS is recording your trip",
-
-backgroundTitle:
-"Kayak GPS",
-
-requestPermissions:true,
-
-stale:false,
-
-distanceFilter:5
-
-},
-
-(position,error)=>{
-
-
-if(error){
-
-console.log(error);
-return;
-
-}
-
-
-if(position){
-
-let lat = position.latitude;
-let lon = position.longitude;
-
-let current = [lat, lon];
-
-console.log(
-"Background GPS:",
-lat,
-lon
-);
-
-
-if(tracking){
-
-if(lastPoint){
-
-let d = getDistance(
-lastPoint[0],
-lastPoint[1],
-lat,
-lon
-);
-
-
-if(d > 5){
-
-distance += d;
-
-
-points.push({
-
-lat:lat,
-
-lon:lon,
-
-time:new Date().toISOString()
-
-});
-
-
-lastPoint = current;
-
-
-line.setLatLngs(
-
-points.map(function(p){
-
-return [p.lat,p.lon];
-
-})
-
-);
-
-
-document.getElementById("distance").innerHTML =
-distance.toFixed(1);
-
-
-document.getElementById("miles").innerHTML =
-(distance/5280).toFixed(3);
-
-
-document.getElementById("points").innerHTML =
-points.length;
-
-}
-
-}
-
-else{
-
-lastPoint = current;
-
-
-points.push({
-
-lat:lat,
-
-lon:lon,
-
-time:new Date().toISOString()
-
-});
-
-
-document.getElementById("points").innerHTML =
-points.length;
-
-}
-
-}
-
-}
-
-}
-
-catch(e){
-
-document.getElementById("status").innerHTML =
-"Background GPS Error: " + e.message;
-
-}
-
-}
 
 
 
