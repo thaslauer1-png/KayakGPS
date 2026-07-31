@@ -127,8 +127,7 @@ Download Last KML
 
 const { Filesystem } = Capacitor.Plugins;
 const { Share } = Capacitor.Plugins;
-const { BackgroundGeolocation } = Capacitor.Plugins;
-
+let BackgroundGeolocation = null;
 let gpsWatcherId = null;
 
 
@@ -208,13 +207,13 @@ Math.floor((new Date()-startTime)/1000);
 document.getElementById("status").innerHTML =
 "Tracking";
 
-startGPSWatcher();
+// startGPSWatcher();
 
 }
 
 
 
-
+/*
 function stopTrip(){
 
 tracking = false;
@@ -228,6 +227,8 @@ if(gpsWatcherId){
     gpsWatcherId = null;
 
 }
+
+*/
 
 clearInterval(timer);
 
