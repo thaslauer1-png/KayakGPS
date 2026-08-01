@@ -128,6 +128,7 @@ Download Last KML
 
 const { Filesystem } = Capacitor.Plugins;
 const { Share } = Capacitor.Plugins;
+const BackgroundGeolocation = Capacitor.Plugins.BackgroundGeolocation;
 
 let map = L.map('map');
 
@@ -392,7 +393,39 @@ speed.toFixed(2);
 }
 
 
+async function startBackgroundGPS() {
 
+    if (!BackgroundGeolocation) {
+        console.log("Background plugin not available");
+        return;
+    }
+
+    BackgroundGeolocation.addWatcher(
+        {
+            backgroundMessage: "Recording your kayak trip",
+            backgroundTitle: "Kayak GPS",
+            requestPermissions: true,
+            stale: false,
+            distanceFilter: 3
+        },
+        function (location, error) {
+
+            if (error) {
+                console.log(error);
+                return;
+            }
+
+            processGPS(
+                location.latitude,
+                location.longitude,
+                location.speed
+            );
+        }
+    );
+
+}
+
+startBackgroundGPS();
 
 navigator.geolocation.watchPosition(
 
